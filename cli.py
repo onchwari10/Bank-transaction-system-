@@ -1,6 +1,7 @@
 import click
 from models import Customer, Account, init_db
-from database.py import get_session
+from database import get_session
+
 
 Session = get_session()
 
