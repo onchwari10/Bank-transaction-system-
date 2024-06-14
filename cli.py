@@ -1,67 +1,65 @@
 import click
-from models import Customer, Account, init_db
+from models import Customer, Account
 from database import get_session
-
-
-Session = get_session()
 
 @click.group()
 def cli():
     pass
 
 @click.command()
-@click.option('--name', prompt='Customer name', help='Name of the customer.')
-@click.option('--email', prompt='Customer email', help='Email of the customer.')
-def create_customer(name, email):
-    session = Session()
+def create_customer():
+    name = input("Enter customer name: ")
+    email = input("Enter customer email: ")
+    session = get_session()
     new_customer = Customer(name=name, email=email)
     session.add(new_customer)
     session.commit()
-    click.echo(f'Customer {name} created successfully.')
+    print(f"Customer {name} added successfully!")
 
 @click.command()
-@click.option('--account_number', prompt='Account number', help='Account number.')
-@click.option('--customer_id', prompt='Customer ID', help='ID of the customer owning the account.')
-def create_account(account_number, customer_id):
-    session = Session()
-    customer = session.query(Customer).filter_by(id=customer_id).first()
-    if not customer:
-        click.echo('Customer not found.')
-        return
-    new_account = Account(account_number=account_number, customer=customer)
-    session.add(new_account)
-    session.commit()
-    click.echo(f'Account {account_number} created successfully.')
+def create_account():
+    account_number = input("Enter account number: ")
+    customer_id = int(input("Enter customer ID: "))
+    session = get_session()
+    customer = session.query(Customer).get(customer_id)
+    if customer:
+        new_account = Account(account_number=account_number, customer=customer)
+        session.add(new_account)
+        session.commit()
+        print(f"Account {account_number} added successfully!")
+    else:
+        print(f"No customer found with ID {customer_id}")
 
 @click.command()
 def list_customers():
-    session = Session()
+    session = get_session()
     customers = session.query(Customer).all()
     for customer in customers:
-        click.echo(customer)
+        print(f"ID: {customer.id}, Name: {customer.name}, Email: {customer.email}")
 
 @click.command()
-@click.option('--customer_id', prompt='Customer ID', help='ID of the customer to view accounts for.')
-def view_accounts(customer_id):
-    session = Session()
-    customer = session.query(Customer).filter_by(id=customer_id).first()
-    if not customer:
-        click.echo('Customer not found.')
-        return
-    for account in customer.accounts:
-        click.echo(account)
+def view_accounts():
+    customer_id = int(input("Enter customer ID: "))
+    session = get_session()
+    customer = session.query(Customer).get(customer_id)
+    if customer:
+        accounts = customer.accounts
+        for account in accounts:
+            print(f"Account Number: {account.account_number}, Balance: {account.balance}")
+    else:
+        print(f"No customer found with ID {customer_id}")
 
 @click.command()
-@click.option('--customer_id', prompt='Customer ID', help='ID of the customer to delete.')
-def delete_customer(customer_id):
-    session = Session()
-    customer = session.query(Customer).filter_by(id=customer_id).first()
-    if not customer:
-        click.echo('Customer not found.')
-        return
-    session.delete(customer)
-    session.commit()
-    click.echo(f'Customer {customer_id} deleted successfully.')
+def delete_customer():
+    customer_id = int(input("Enter customer ID: "))
+    session = get_session()
+    customer = session.query(Customer).get(customer_id)
+    if customer:
+        session.delete(customer)
+        session.commit()
+        print(f"Customer with ID {customer_id} deleted successfully!")
+    else:
+        print(f"No customer found with ID {customer_id}")
 
 cli.add_command(create_customer)
 cli.add_command(create_account)
